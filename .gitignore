@@ -1,0 +1,13 @@
+*.py[cod]
+
+#Jupyter Notebook
+notebooks/.ipynb_checkpoints/
+
+
+*.env*
+
+.idea
+
+/data
+logging
+data
