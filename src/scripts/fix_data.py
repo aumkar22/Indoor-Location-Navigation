@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Dict, Optional
 
 from src.definitions import *
 
@@ -14,16 +14,6 @@ def line_check(line):
         line_to_split = line[-1]
         sensor_count = sensor_count_check(line_to_split)
 
-    else:
-        sensor_count_check(line)
-
-
-def line_separator_fix(line: Union[List[List[str]], List[str]]):
-
-    if len(line) == 2:
-        line_to_split = line[-1]
-        sensor_count = sensor_count_check(line_to_split)
-        breakpoint()
         if (
             len(sensor_count) == 1
             and len(line_to_split) <= 10
@@ -31,17 +21,26 @@ def line_separator_fix(line: Union[List[List[str]], List[str]]):
         ):
             return "\t".join(line_to_split)
 
-        elif len(sensor_count.values()) > 1:
-            first_occurrence = line_to_split.index(list(sensor_count.keys())[0], 0)
-            second_occurrence = line_to_split.index(
-                list(sensor_count.keys())[0], first_occurrence + 1
-            )
+    else:
+        sensor_count = sensor_count_check(line)
+        _, split_text = line_separator_fix(sensor_count, line)
+        if len(split_text) == 2:
+            return line_check(split_text)
+        else:
+            return "\t".join(split_text)
 
-            ending_for_first_occurrence = line_to_split[second_occurrence - 1][:-13]
-            first_line = line_to_split[: second_occurrence - 1] + [ending_for_first_occurrence]
 
-            timestamp_for_second_occurrence = line_to_split[second_occurrence - 1][-13:]
-            split_line = [timestamp_for_second_occurrence] + line_to_split[second_occurrence:]
+def line_separator_fix(sensor_count: Optional[Dict], line: Union[List[List[str]], List[str]]):
 
-            breakpoint()
-            return line_separator_fix([first_line, split_line])
+    if len(sensor_count.values()) > 1:
+        first_occurrence = line.index(list(sensor_count.keys())[0], 0)
+        second_occurrence = line.index(list(sensor_count.keys())[0], first_occurrence + 1)
+
+        ending_for_first_occurrence = line[second_occurrence - 1][:-13]
+        first_line = line[: second_occurrence - 1] + [ending_for_first_occurrence]
+
+        timestamp_for_second_occurrence = line[second_occurrence - 1][-13:]
+        split_line = [timestamp_for_second_occurrence] + line[second_occurrence:]
+
+        breakpoint()
+        return line_separator_fix(None, [first_line, split_line])
