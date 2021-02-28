@@ -6,8 +6,6 @@ DATA_PATH: Path = PROJECT_PATH / "data"
 TRAIN_PATH: Path = DATA_PATH / "train"
 TEST_PATH: Path = DATA_PATH / "test"
 
-TRAIN_TEXT_DATA = TRAIN_PATH / "**" / "*.txt"
-
 SENSORS = (
     "TYPE_ACCELEROMETER",
     "TYPE_MAGNETIC_FIELD",
