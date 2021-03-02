@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from src.definitions import *
+from src.definitions import SENSORS
 
 
 def line_check(line: List[str]) -> List[List[str]]:
