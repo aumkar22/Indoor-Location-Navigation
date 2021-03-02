@@ -18,3 +18,5 @@ SENSORS = (
     "TYPE_BEACON",
     "TYPE_WAYPOINT",
 )
+
+sensor_train_files = list(TRAIN_PATH.glob(r"**/*.txt"))

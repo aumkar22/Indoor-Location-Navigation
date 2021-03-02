@@ -1,6 +1,6 @@
 from typing import List, Tuple
 
-from src.definitions import *
+from src.definitions import SENSORS
 
 
 def line_check(line: List[str]) -> List[List[str]]:
@@ -48,6 +48,6 @@ def split_sensor_line(line: List[str]) -> Tuple[List[str], List[str]]:
     first_line = line[: second_occurrence - 1] + [ending_for_first_occurrence]
 
     timestamp_for_second_line = line[second_occurrence - 1][-13:]
-    second_line = [timestamp_for_second_line] + line[sensor_occurrence:]
+    second_line = [timestamp_for_second_line] + line[second_occurrence:]
 
     return first_line, second_line
