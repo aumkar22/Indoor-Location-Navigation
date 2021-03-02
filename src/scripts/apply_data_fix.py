@@ -1,12 +1,12 @@
-"""
-Script to apply data fix. Splits erroneous data lines and saves the modified text file.
-"""
-
 from src.definitions import *
 from src.scripts.fix_data import line_check
 
 
 def fix_data_issues():
+
+    """
+    Script to apply data fix. Splits erroneous data lines and saves the modified text file.
+    """
 
     for sensor_file in sensor_train_files:
         number_of_corrected_lines = 1
