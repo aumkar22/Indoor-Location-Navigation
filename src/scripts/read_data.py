@@ -39,7 +39,7 @@ def read_data_file(data_filename):
 
     for line_data in lines:
         line_data = line_data.strip()
-        if not line_data or line_data[0] == "#" or len(line_data) > 10:
+        if not line_data or line_data[0] == "#" or len(line_data.split("\t")) > 10:
             continue
 
         line_data = line_data.split("\t")
