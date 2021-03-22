@@ -7,12 +7,12 @@ def interpolate_timestamps(
 ) -> np.ndarray:
 
     """
+    Function to interpolate waypoint/step data to match sensor timestamp
 
-
-    :param data_timestamps:
-    :param location_data:
-    :param check_sorted:
-    :return:
+    :param data_timestamps: sensor data
+    :param location_data: waypoint/step data
+    :param check_sorted: check if data is sorted on timestamp
+    :return: Interpolated data
     """
 
     if not check_sorted:
