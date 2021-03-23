@@ -9,7 +9,7 @@ def interpolate_timestamps(
     """
     Function to interpolate waypoint/step data to match sensor timestamp
 
-    :param data_timestamps: sensor data
+    :param data_timestamps: sensor data timestamps
     :param location_data: waypoint/step data
     :param check_sorted: check if data is sorted on timestamp
     :return: Interpolated data
@@ -17,7 +17,7 @@ def interpolate_timestamps(
 
     if not check_sorted:
         location_data = location_data[location_data[:, 0].argsort()]
-        data_timestamps = data_timestamps[data_timestamps[:, 0].argsort()]
+        data_timestamps = np.sort(data_timestamps)
 
     data_t = location_data[:, 0]
     data_x = location_data[:, 1]
@@ -29,8 +29,8 @@ def interpolate_timestamps(
         data_t, data_y, fill_value=(data_y[0], data_y[-1]), bounds_error=False
     )
 
-    interpolated_x = interpolation_function_x(data_timestamps[:, 1])
-    interpolated_y = interpolation_function_y(data_timestamps[:, 2])
-    interpolated_data = np.vstack([data_timestamps[:, 0], interpolated_x, interpolated_y])
+    interpolated_x = interpolation_function_x(data_timestamps)
+    interpolated_y = interpolation_function_y(data_timestamps)
+    interpolated_data = np.column_stack([data_timestamps, interpolated_x, interpolated_y])
 
     return interpolated_data
