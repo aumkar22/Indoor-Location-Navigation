@@ -1,6 +1,6 @@
 from pathlib import Path
 
-PROJECT_PATH: Path = Path(__file__).parent.parent
+PROJECT_PATH: Path = Path(__file__).parent.parent.parent
 
 DATA_PATH: Path = PROJECT_PATH / "data"
 TRAIN_PATH: Path = DATA_PATH / "train"

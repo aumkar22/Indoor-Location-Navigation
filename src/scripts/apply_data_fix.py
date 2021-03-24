@@ -1,4 +1,4 @@
-from src.definitions import *
+from src.util.definitions import *
 from src.scripts.fix_data import line_check
 
 
