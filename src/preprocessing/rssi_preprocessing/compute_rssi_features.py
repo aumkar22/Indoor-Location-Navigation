@@ -90,7 +90,7 @@ def extract_wifi_rssi(mwi_datas):
         for wifi_d in wifi_data:
             bssid = wifi_d[2]
             rssi = int(wifi_d[3])
-
+            time_ = int(wifi_d[4])
             if bssid in wifi_rssi:
                 position_rssi = wifi_rssi[bssid]
                 if position_key in position_rssi:
@@ -101,10 +101,10 @@ def extract_wifi_rssi(mwi_datas):
                     )
                     position_rssi[position_key][1] = old_count + 1
                 else:
-                    position_rssi[position_key] = np.array([rssi, 1])
+                    position_rssi[position_key] = np.array([time_, rssi, 1])
             else:
                 position_rssi = {}
-                position_rssi[position_key] = np.array([rssi, 1])
+                position_rssi[position_key] = np.array([time_, rssi, 1])
 
             wifi_rssi[bssid] = position_rssi
 
