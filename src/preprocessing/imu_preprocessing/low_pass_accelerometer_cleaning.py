@@ -1,5 +1,4 @@
 import numpy as np
-import mpmath as mp
 
 from scipy.signal import lfilter
 
@@ -17,7 +16,7 @@ def normalized_acceleration(acc: np.ndarray) -> np.ndarray:
 
 
 def fir_coefficients_hamming_window(
-    M: int = 30, alpha: float = 0.0, cutoff_frequency: float = 2.0
+    M: int = 30, alpha: float = 0.0, cutoff_frequency: float = 2
 ) -> np.ndarray:
 
     """
@@ -34,18 +33,19 @@ def fir_coefficients_hamming_window(
     coeff = []
 
     for n in range(1, N):
-        coeff.append((mp.sin(n - alpha) * cutoff_frequency) / ((n - alpha) * np.pi))
+        coeff.append((np.sin(n - alpha) * cutoff_frequency) / ((n - alpha) * np.pi))
 
-    return np.array(coeff) * (0.54 - (0.46 * mp.cos((2 * np.pi * N) / M)))
+    return np.array(coeff) * float(0.54 - (0.46 * np.cos((2 * np.pi * N) / M)))
 
 
-def apply_filter(coefficients: np.ndarray, acc: np.ndarray) -> np.ndarray:
+def apply_filter(coefficients: np.ndarray, sensor_data: np.ndarray) -> np.ndarray:
 
     """
     Function to apply low pass filter to normalized accelerometer data to remove sensor bias.
 
     :param coefficients: Filter coefficients
-    :param acc: Normalized accelerometer data
+    :param sensor_data: Sensor data to be filtered
     :return: Filtered accelerometer data
     """
-    return lfilter(coefficients, 1.0, acc)
+
+    return lfilter(coefficients, 1.0, sensor_data)

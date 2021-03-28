@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def compute_quaternions(rotation_data: np.ndarray) -> np.ndarray:
+def fix_quaternion(rotation_data: np.ndarray) -> np.ndarray:
 
     """
     Quaternion computation taken from
