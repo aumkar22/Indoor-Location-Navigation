@@ -63,3 +63,17 @@ def compute_upper_lower_envelopes(sensor_data: np.ndarray) -> Tuple[np.ndarray, 
     lower_envelope = np.array([lower_envelope_interpolation(i) for i in range(len(sensor_data))])
 
     return upper_envelope, lower_envelope
+
+
+def apply_drift_correction(data_with_drift: np.ndarray) -> np.ndarray:
+
+    """
+    Apply drift correction to the integrated data.
+
+    :param data_with_drift: Integrated data with drift
+    :return: Data after removing drift.
+    """
+
+    upper_envelope, lower_envelope = compute_upper_lower_envelopes(data_with_drift)
+    envelope_mean = (upper_envelope + lower_envelope) / 2.0
+    return data_with_drift - envelope_mean

@@ -16,7 +16,7 @@ def normalized_acceleration(acc: np.ndarray) -> np.ndarray:
 
 
 def fir_coefficients_hamming_window(
-    M: int = 30, alpha: float = 0.0, cutoff_frequency: float = 2
+    M: int = 30, alpha: float = 0.0, cutoff_frequency: float = 2.0
 ) -> np.ndarray:
 
     """
