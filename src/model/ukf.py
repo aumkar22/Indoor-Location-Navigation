@@ -1,3 +1,5 @@
+from filterpy.kalman import MerweScaledSigmaPoints
+
 from src.preprocessing.model.measurement_functions import *
 from src.preprocessing.imu_preprocessing.data_interpolation import interpolate_timestamps
 from src.preprocessing.imu_preprocessing.linear_acceleration_quaternion_compute import *
@@ -6,20 +8,41 @@ from src.preprocessing.imu_preprocessing.integrate_drift_correction import apply
 from src.preprocessing.imu_preprocessing.step_relative_position_extractor import (
     compute_step_positions,
 )
+from src.model.quaternion_averaging import average_quaternions
 
 
 class UnscentedKF(object):
-    def __init__(self, acc: np.ndarray, ahrs: np.ndarray, waypoint: np.ndarray):
+
+    """
+    Class for Unscented Kalman filter
+    """
+
+    def __init__(
+        self,
+        acc: np.ndarray,
+        ahrs: np.ndarray,
+        waypoint: np.ndarray,
+        n: int,
+        beta: float = 2.0,
+        alpha: float = 1e-3,
+    ):
 
         """
         :param acc: Accelerometer measurements
         :param ahrs: Rotation vector measurements
         :param waypoint: Ground truth position measurements
+        :param n: Dimension of the state
+        :param beta: Beta parameter to incorporate prior knowledge of the distribution of state
+        :param alpha: Alpha parameter to determine spread of sigma points
         """
 
         self.acc = acc
         self.ahrs = ahrs
         self.waypoint = waypoint
+        self.n = n
+        self.beta = beta
+        self.alpha = alpha
+        self.kappa = 3 - self.n
 
     def fx(self) -> np.ndarray:
 
@@ -89,3 +112,56 @@ class UnscentedKF(object):
         rotation_vector = get_rotation_vector(quaternion)
 
         return np.column_stack((acceleration, rotation_vector, waypoints))
+
+    def compute_sigma_weights(self) -> Tuple[np.ndarray, np.ndarray]:
+
+        """
+        Function to compute weights for sigma points mean and covariance
+
+        :return: Weights for sigma points mean and covariance
+        """
+
+        lambda_ = ((self.alpha ** 2) * (self.n + self.kappa)) - self.n
+
+        wc = wm = np.full((2 * self.n) + 1, 1.0 / (2 * (self.n + lambda_)))
+        wc[0] = (lambda_ / (self.n + lambda_)) + 1.0 - (self.alpha ** 2) + self.beta
+        wm[0] = lambda_ / (self.n + lambda_)
+
+        return wc, wm
+
+    def get_means_and_covariance(self, state: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+
+        """
+        Function to compute mean and covariance of the filter
+
+        :param state: State data array
+        :return: Tuple of means and covariance
+        """
+
+        quaternion = state[:, [7, 8, 9, 10]]
+        quaternion_mean = average_quaternions(quaternion)
+
+        states_without_quaternion = np.delete(state, [7, 8, 9, 10], axis=1)
+        mean_states_without_quaternion = np.mean(states_without_quaternion, axis=0)
+
+        state_means = np.insert(mean_states_without_quaternion, [7, 7, 7, 7], quaternion_mean)
+        state_covariance = np.cov(state.T)
+
+        return state_means, state_covariance
+
+    def compute_sigma_points(
+        self, filter_mean: np.ndarray, filter_covariance: np.ndarray
+    ) -> np.ndarray:
+
+        """
+        Function to compute sigma points.
+
+        :param filter_mean: Array of filter means of length n.
+        :param filter_covariance: Covariance P of the filter of size (n x n)
+        :return: Sigma points of size (n x 2n+1)
+        """
+
+        points = MerweScaledSigmaPoints(
+            n=self.n, alpha=self.alpha, beta=self.beta, kappa=self.kappa
+        )
+        return points.sigma_points(filter_mean, filter_covariance)
