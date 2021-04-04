@@ -41,14 +41,13 @@ def compute_linear_acceleration(
     :return: Acceleration after removing the gravity component (linear acceleration)
     """
 
-    acc = acc_data[1:]
     gravity = np.zeros(3)
 
     gravity[0] = 2 * (q[1] * q[3] - q[0] * q[2])
     gravity[1] = 2 * (q[0] * q[1] + q[2] * q[3])
-    gravity[2] = q[0] * q[0] - q[1] * q[1] - q[2] * q[2] + q[3] * q[3]
+    gravity[2] = q[0] ** 2 - q[1] ** 2 - q[2] ** 2 + q[3] ** 2
 
     return (
-        np.array([acc_data[0], acc[0] - gravity[0], acc[1] - gravity[1], acc[2] - gravity[2]]),
+        np.array([acc_data[0] - gravity[0], acc_data[1] - gravity[1], acc_data[2] - gravity[2]]),
         gravity,
     )

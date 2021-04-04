@@ -11,12 +11,11 @@ def normalized_acceleration(acc: np.ndarray) -> np.ndarray:
     :param acc: Tri-axial accelerometer data
     :return: Normalized acceleration
     """
-
-    return np.array([np.sqrt(np.sum(a[1:] ** 2)) for a in acc])
+    return np.sqrt(np.sum(acc ** 2))
 
 
 def fir_coefficients_hamming_window(
-    M: int = 30, alpha: float = 0.0, cutoff_frequency: float = 2.0
+    M: int = 4, alpha: float = 0.0, cutoff_frequency: float = 2.5
 ) -> np.ndarray:
 
     """
