@@ -6,7 +6,7 @@ def get_rotation_vector(quat: np.ndarray):
     """
     Get rotation vector measurement from preprocessed quaternion
 
-    :param q: Quaternion vectors
+    :param quat: Quaternion vectors
     :return: Rotation vector measurements
     """
 
@@ -26,10 +26,11 @@ def get_rotation_vector(quat: np.ndarray):
 def get_acc_from_quat(q: np.ndarray, linear_acc: np.ndarray) -> np.ndarray:
 
     """
+    Function to get acceleration measurement from linear acceleration state
 
-    :param q:
-    :param linear_acc:
-    :return:
+    :param q: Quaternion
+    :param linear_acc: Linear acceleration
+    :return: Acceleration measurement
     """
 
     acc = np.zeros(3)

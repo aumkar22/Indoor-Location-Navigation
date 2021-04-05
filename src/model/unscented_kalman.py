@@ -1,8 +1,6 @@
-from filterpy.kalman import MerweScaledSigmaPoints, unscented_transform
+from filterpy.kalman import unscented_transform
 
-from src.preprocessing.imu_preprocessing.linear_acceleration_quaternion_compute import *
 from src.model.quaternion_averaging import average_quaternions
-from src.preprocessing.imu_preprocessing.low_pass_accelerometer_cleaning import *
 from scipy.linalg import cholesky, LinAlgError
 from src.scripts.time_conversion import timestamp_conversions
 from src.model.waypoint_measurement_fix import fix_waypoint
@@ -26,10 +24,14 @@ def sqrt_func(xf: np.ndarray) -> np.ndarray:
     return result
 
 
-def compute_sigma_weights(alpha: float, beta: float, n: int = 9) -> Tuple[np.ndarray, np.ndarray]:
+def compute_sigma_weights(alpha: float, beta: float, n: int = 8) -> Tuple[np.ndarray, np.ndarray]:
 
     """
     Function to compute weights for sigma points mean and covariance
+
+    :param alpha: Parameter to decide the spread of sigma points
+    :param beta: Parameter to incorporate prior knowledge of the distribution of state
+    :param n: State dimension
     :return: Weights for sigma points mean and covariance
     """
 
@@ -45,14 +47,14 @@ def compute_sigma_weights(alpha: float, beta: float, n: int = 9) -> Tuple[np.nda
 
 
 def perform_ut(
-    points: MerweScaledSigmaPoints,
     sigmas: np.ndarray,
     dt: float,
     timestamp: float,
     func: Callable,
     wm: np.ndarray,
     wc: np.ndarray,
-    n: int = 9,
+    noise: np.ndarray,
+    n: int = 8,
 ) -> Tuple[np.ndarray, ...]:
 
     """
@@ -60,12 +62,12 @@ def perform_ut(
 
     :param n: Dimension of states / measurements
     :param sigmas: Sigma points
-    :param points: Simplex sigma points
     :param dt: Time step
     :param timestamp: Original timestamp
     :param func: Fx (predict) / Hx (update) function to pass sigma points through
     :param wm: Weights of means
     :param wc: Weights of covariance
+    :param noise: Noise matrix
     :return: Unscented mean and covariance
     """
 
@@ -76,31 +78,10 @@ def perform_ut(
         points_after_transformation[i] = func(sigmas[i, :], dt, timestamp)
 
     transformed_mean, transformed_covariance = unscented_transform(
-        points_after_transformation, wm, wc
+        points_after_transformation, wm, wc, noise
     )
 
     return transformed_mean, transformed_covariance, points_after_transformation
-
-
-def get_means_and_covariance(state: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-
-    """
-    Function to compute mean and covariance of the filter
-
-    :param state: State data array
-    :return: Tuple of means and covariance
-    """
-
-    quaternion = state[:, -4:]
-    quaternion_mean = average_quaternions(quaternion)
-
-    states_without_quaternion = np.delete(state, [5, 6, 7, 8], axis=1)
-    mean_states_without_quaternion = np.mean(states_without_quaternion, axis=0)
-
-    state_means = np.insert(mean_states_without_quaternion, [5, 5, 5, 5], quaternion_mean)
-    state_covariance = np.cov(state.T)
-
-    return state_means, state_covariance
 
 
 def update(
@@ -109,31 +90,33 @@ def update(
     prior_sigma: np.ndarray,
     dt: float,
     timestamp: float,
-    points: MerweScaledSigmaPoints,
     measurements: np.ndarray,
     measurement_function: Callable,
     wm: np.ndarray,
     wc: np.ndarray,
+    R: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     """
-    Function to compute prior states
+    Update function to convert prior sigmas to measurement space. Prior sigmas are passed
+    through UT to get mean and covariance of measurement sigma points. The function then
+    estimates new states and covariance by computing residuals and kalman gain.
 
     :param xp: Prior predicted mean
     :param pcov: Prior predicted covariance
     :param prior_sigma: Prior
     :param dt: Time step
     :param timestamp: Original timestamp
-    :param points: Simplex sigma points
     :param measurements: Measurements data
     :param measurement_function: Function to convert prior sigmas to measurement space
     :param wm: Weights of means
     :param wc: Weights of covariance
+    :param R: Measurement noise
     :return: New state estimates and covariance
     """
 
     mean, covariance, sigmas_after_ut = perform_ut(
-        points, prior_sigma, dt, timestamp, measurement_function, wm, wc
+        prior_sigma, dt, timestamp, measurement_function, wm, wc, R
     )
 
     pxz = np.zeros((len(mean), len(mean)))
@@ -148,34 +131,18 @@ def update(
     return x, p
 
 
-def fix_measurement_to_state(acc, ahrs, waypoint) -> np.ndarray:
+def fix_measurements(acc, gyr, waypoint) -> np.ndarray:
 
     """
-    Function to get data states
+    Function to fix measurements and get them in proper shape
 
     :param acc: Accelerometer measurements
-    :param ahrs: Rotation vector measurements
+    :param gyr: Gyroscope measurements
     :param waypoint: Waypoint measurements
-    :return: Array of system states
+    :return: Array of fixed measurements
     """
 
-    q = np.array([fix_quaternion(i[1:]) for i in ahrs])
     t = timestamp_conversions(acc[:, 0] / 1000)
-
-    filter_coefficients = fir_coefficients_hamming_window()
-    linear_accx = apply_filter(filter_coefficients, acc[:, 1])
-    linear_accy = apply_filter(filter_coefficients, acc[:, 2])
-    linear_accz = apply_filter(filter_coefficients, acc[:, 3])
-
-    velx = np.array([(i * dt) for i, dt in zip(linear_accx, t)])
-    vely = np.array([(i * dt) for i, dt in zip(linear_accy, t)])
-
-    corrected_velx = apply_drift_correction(velx)
-    corrected_vely = apply_drift_correction(vely)
-
-    timestamps_index_with_original_waypoints = acc[:, 0].searchsorted(waypoint[:, 0])
-    corrected_velx[timestamps_index_with_original_waypoints] = 0.0
-    corrected_vely[timestamps_index_with_original_waypoints] = 0.0
 
     way_fixed = fix_waypoint(acc[:, 0], waypoint)
 
@@ -184,12 +151,11 @@ def fix_measurement_to_state(acc, ahrs, waypoint) -> np.ndarray:
             t,
             way_fixed[:, 0],
             way_fixed[:, 1],
-            linear_accx,
-            linear_accy,
-            linear_accz,
-            q[:, 0],
-            q[:, 1],
-            q[:, 2],
-            q[:, 3],
+            acc[:, 1],
+            acc[:, 2],
+            acc[:, 3],
+            gyr[:, 1],
+            gyr[:, 2],
+            gyr[:, 3],
         )
     )

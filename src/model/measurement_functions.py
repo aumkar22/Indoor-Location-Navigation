@@ -1,40 +1,44 @@
-import numpy as np
-
-from src.preprocessing.model.measurement_functions_quaternion import *
 from src.preprocessing.imu_preprocessing.low_pass_accelerometer_cleaning import *
-from src.preprocessing.imu_preprocessing.step_relative_position_extractor import *
 from src.model.state_transition_functions import get_relative_positions
+from src.preprocessing.imu_preprocessing.rotation_matrix import *
 
 
-def hx(state: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
+def hx(prior_sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
 
     """
-    [x, y, accx, accy, accz, q0, q1, q2, q3]
-    :param state:
-    :param dt:
-    :param timestamp
-    :return:
+    Measurement function to convert prior sigmas to measurement space to be passed through UT.
+
+    :param prior_sigmas: Prior sigmas
+    :param dt: Time step
+    :param timestamp: Timestamp in seconds
+    :return: Array of measurements
     """
 
-    quat = state[-4:]
-    acc = state[2:-4]
+    acc = prior_sigmas[2:5]
+    gyr = prior_sigmas[5:]
+
     filter_coefficients = fir_coefficients_hamming_window()
     linear_acc = apply_filter(filter_coefficients, acc)
-    acc_measurement = get_acc_from_quat(quat, linear_acc)
-
-    rotation_vector = get_rotation_vector(quat)
     normalized_acc = normalized_acceleration(linear_acc)
+
+    yaw_body = (gyr[2] * dt) * (180 / np.pi)
+    pitch_body = (gyr[1] * dt) * (180 / np.pi)
+    roll_body = (gyr[0] * dt) * (180 / np.pi)
+
+    R = get_rotation_matrix(yaw_body, pitch_body, roll_body)
+    euler_angles_in_navigation = get_navigation_angles_from_rotation_matrix(R)
+
     velocity = normalized_acc * dt
     position = velocity * dt
 
-    heading = compute_headings(quat.reshape(1, 4))
-    distance = np.array([timestamp, position])
+    heading = -euler_angles_in_navigation[-1] * (2 * np.pi)
 
-    relative_positions = get_relative_positions(distance, heading.flatten())
+    distance = np.array([timestamp, position])
+    relative_position = get_relative_positions(distance, heading)
 
     waypoint_measurement = np.zeros(3)
-    waypoint_measurement[0] = relative_positions[0]
-    waypoint_measurement[1] = state[0] - relative_positions[1]
-    waypoint_measurement[2] = state[1] - relative_positions[2]
+    waypoint_measurement[0] = relative_position[0]
+    waypoint_measurement[1] = prior_sigmas[0] - relative_position[1]
+    waypoint_measurement[2] = prior_sigmas[1] - relative_position[2]
 
-    return np.concatenate((waypoint_measurement[1:], acc_measurement, rotation_vector))
+    return np.concatenate((waypoint_measurement[1:], acc, gyr))

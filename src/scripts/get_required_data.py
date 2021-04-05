@@ -20,11 +20,11 @@ def get_data(filepath: Path, wifi: bool = False) -> Tuple[np.ndarray, ...]:
 
     path_datas = read_data_file(filepath)
     acce_datas = path_datas.acce
-    ahrs_datas = path_datas.ahrs
+    gyro_datas = path_datas.gyro
     wifi_datas = path_datas.wifi
     posi_datas = path_datas.waypoint
 
     if wifi:
-        return acce_datas, ahrs_datas, wifi_datas, posi_datas
+        return acce_datas, gyro_datas, wifi_datas, posi_datas
     else:
-        return acce_datas, ahrs_datas, posi_datas
+        return acce_datas, gyro_datas, posi_datas
