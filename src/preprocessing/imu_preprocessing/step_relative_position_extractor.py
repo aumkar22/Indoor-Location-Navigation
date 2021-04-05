@@ -382,4 +382,4 @@ def compute_step_positions(acce_datas, ahrs_datas, posi_datas):
     step_headings = compute_step_heading(step_timestamps, headings)
     rel_positions = compute_rel_positions(stride_lengths, step_headings)
     step_positions = correct_positions(rel_positions, posi_datas)
-    return step_positions, rel_positions
+    return step_positions
