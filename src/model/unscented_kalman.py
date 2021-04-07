@@ -40,7 +40,8 @@ def compute_sigma_weights(
 
     lambda_ = ((alpha ** 2) * (n + kappa)) - n
 
-    wc = wm = np.full((2 * n) + 1, 1.0 / (2 * (n + lambda_)))
+    wc = np.full((2 * n) + 1, 1.0 / (2 * (n + lambda_)))
+    wm = np.full((2 * n) + 1, 1.0 / (2 * (n + lambda_)))
     wc[0] = (lambda_ / (n + lambda_)) + 1.0 - (alpha ** 2) + beta
     wm[0] = lambda_ / (n + lambda_)
 
