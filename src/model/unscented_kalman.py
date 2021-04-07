@@ -24,7 +24,9 @@ def sqrt_func(xf: np.ndarray) -> np.ndarray:
     return result
 
 
-def compute_sigma_weights(alpha: float, beta: float, n: int = 8) -> Tuple[np.ndarray, np.ndarray]:
+def compute_sigma_weights(
+    alpha: float, beta: float, n: int = 8, kappa: int = 0
+) -> Tuple[np.ndarray, np.ndarray]:
 
     """
     Function to compute weights for sigma points mean and covariance
@@ -32,10 +34,9 @@ def compute_sigma_weights(alpha: float, beta: float, n: int = 8) -> Tuple[np.nda
     :param alpha: Parameter to decide the spread of sigma points
     :param beta: Parameter to incorporate prior knowledge of the distribution of state
     :param n: State dimension
+    :param kappa: Secondary scaling parameter, usually set to zero or (3 - n)
     :return: Weights for sigma points mean and covariance
     """
-
-    kappa = 3 - n
 
     lambda_ = ((alpha ** 2) * (n + kappa)) - n
 
