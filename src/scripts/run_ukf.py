@@ -1,6 +1,5 @@
 import json
 
-from filterpy.kalman import MerweScaledSigmaPoints
 from filterpy.common import Q_continuous_white_noise
 
 from src.scripts.get_required_data import *
@@ -26,7 +25,6 @@ t = data_[:, 0]
 data = data_[:, 1:]
 measurements = np.column_stack((data[:, :2], acc[:, 1:], gyro[:, 1:]))
 
-points = MerweScaledSigmaPoints(n=8, alpha=0.3, beta=2.0, kappa=-6, sqrt_method=sqrt_func)
 R = np.random.normal(0.0, 1.0, (8, 8))
 
 true_waypoint = pd.DataFrame({"t": way[:, 0] / 1000, "x": way[:, 1], "y": way[:, 2]})
@@ -38,13 +36,13 @@ for i, measure in enumerate(data):
     if i == 0:  # Initial state belief
         mu = initial_mu
         cov = initial_covariance
-        wm, wc = compute_sigma_weights(0.6, 2.0, kappa=-3)
+        wm, wc, lambda_ = compute_sigma_weights(0.6, 2.0, kappa=-3)
     else:
         mu = estimated_state
         cov = new_state_covariance
-        wm, wc = compute_sigma_weights(0.3, 2.0)
+        wm, wc, lambda_ = compute_sigma_weights(0.3, 2.0)
 
-    sigmas = points.sigma_points(mu, cov)
+    sigmas = compute_sigmas(lambda_, mu, cov)
 
     z = np.concatenate((measure[:2], acc[i, 1:], gyro[i, 1:]))
     process_noise = Q_continuous_white_noise(4, t[i], block_size=2)

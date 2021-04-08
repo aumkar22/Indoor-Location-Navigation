@@ -1,32 +1,42 @@
 from filterpy.kalman import unscented_transform
+from scipy.linalg import cholesky, svd
 
-from src.model.quaternion_averaging import average_quaternions
-from scipy.linalg import cholesky, LinAlgError
 from src.scripts.time_conversion import timestamp_conversions
 from src.model.waypoint_measurement_fix import fix_waypoint
 from src.preprocessing.imu_preprocessing.integrate_drift_correction import *
 
 
-def sqrt_func(xf: np.ndarray) -> np.ndarray:
+def compute_sigmas(lambda_: float, x: np.ndarray, P: np.ndarray, n: int = 8) -> np.ndarray:
 
     """
-    Function to avoid 'scipy linalg cholesky n-th leading minor not positive definite' error.
-    Refer: https://github.com/rlabbe/filterpy/issues/62
+    To avoid errors due to covariance matrix being positive semidefinite or non-positive
+    definite, sigma calculation is based on SVD decomposition of state covariance. Refer:
+    https://www.researchgate.net/publication/251945722_A_UKF_Algorithm_Based_on_the_Singular_Value_Decomposition_of_State_Covariance
 
-    :param xf: Array of means
-    :return: Lower triangular matrix
+    :param lambda_: Lambda scaling parameter
+    :param x: State mean
+    :param P: State covariance
+    :param n: State dimension
+    :return: Computed sigma points
     """
-    try:
-        result = cholesky(xf)
-    except LinAlgError:
-        xf = (xf + xf.T) / 2
-        result = cholesky(xf)
-    return result
+
+    u, s, v = svd(P)
+    D = np.diag(s)
+    c = u @ cholesky((lambda_ + n) * D) @ u.T
+
+    sigmas = np.zeros((2 * n + 1, n))
+    sigmas[0] = x
+
+    for k in range(n):
+        sigmas[k + 1] = np.subtract(x, -c[k])
+        sigmas[n + k + 1] = np.subtract(x, c[k])
+
+    return sigmas
 
 
 def compute_sigma_weights(
-    alpha: float, beta: float, n: int = 8, kappa: int = 0
-) -> Tuple[np.ndarray, np.ndarray]:
+    alpha: float, beta: float, n: int = 8, kappa: int = -5
+) -> Tuple[np.ndarray, np.ndarray, float]:
 
     """
     Function to compute weights for sigma points mean and covariance
@@ -45,7 +55,7 @@ def compute_sigma_weights(
     wc[0] = (lambda_ / (n + lambda_)) + 1.0 - (alpha ** 2) + beta
     wm[0] = lambda_ / (n + lambda_)
 
-    return wc, wm
+    return wc, wm, lambda_
 
 
 def perform_ut(
