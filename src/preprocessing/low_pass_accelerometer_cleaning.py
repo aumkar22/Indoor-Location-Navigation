@@ -29,7 +29,7 @@ def get_linear_acceleration(acc: np.ndarray, alpha: float = 0.8) -> np.ndarray:
     gravity_x = 0.0
     gravity_y = 0.0
     gravity_z = 9.81
-    linear_acceleration = np.empty(3)
+    linear_acceleration = np.zeros(3)
 
     gravity_x = alpha * gravity_x + (1 - alpha) * acc[0]
     gravity_y = alpha * gravity_y + (1 - alpha) * acc[1]
