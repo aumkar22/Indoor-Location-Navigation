@@ -1,6 +1,6 @@
-from src.preprocessing.imu_preprocessing.low_pass_accelerometer_cleaning import *
+from src.preprocessing.low_pass_accelerometer_cleaning import *
 from src.model.state_transition_functions import get_relative_positions
-from src.preprocessing.imu_preprocessing.rotation_matrix import *
+from src.preprocessing.rotation_matrix import *
 
 
 def get_acc_with_gravity(linear_acceleration: np.ndarray, alpha: float = 0.8) -> np.ndarray:

@@ -1,10 +1,8 @@
-import pandas as pd
-
 from pathlib import Path
 
 from src.scripts.read_data import read_data_file
-from src.preprocessing.imu_preprocessing.linear_acceleration_quaternion_compute import *
-from src.preprocessing.imu_preprocessing.step_relative_position_extractor import *
+from src.preprocessing.linear_acceleration_compute import *
+from src.preprocessing.step_relative_position_extractor import *
 
 
 def get_data(filepath: Path, wifi: bool = False) -> Tuple[np.ndarray, ...]:

@@ -3,7 +3,7 @@ from scipy.linalg import cholesky, svd
 
 from src.scripts.time_conversion import timestamp_conversions
 from src.model.waypoint_measurement_fix import fix_waypoint
-from src.preprocessing.imu_preprocessing.integrate_drift_correction import *
+from src.preprocessing.integrate_drift_correction import *
 
 
 def compute_sigmas(lambda_: float, x: np.ndarray, P: np.ndarray, n: int = 8) -> np.ndarray:

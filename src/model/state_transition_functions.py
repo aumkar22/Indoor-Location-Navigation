@@ -1,5 +1,5 @@
-from src.preprocessing.imu_preprocessing.low_pass_accelerometer_cleaning import *
-from src.preprocessing.imu_preprocessing.rotation_matrix import *
+from src.preprocessing.low_pass_accelerometer_cleaning import *
+from src.preprocessing.rotation_matrix import *
 
 
 def get_relative_positions(distance: np.ndarray, heading: np.ndarray) -> np.ndarray:
