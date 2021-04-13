@@ -32,6 +32,6 @@ def fix_waypoint(t: np.ndarray, way: np.ndarray, estimate: bool = False) -> np.n
         return np.column_stack((wx, wy))
     else:
 
-        way_df = pd.DataFrame({"x": wx, "y": wy}).ffill()
+        way_df = pd.DataFrame({"x": wx, "y": wy}).interpolate(method="linear")
 
         return way_df.values

@@ -3,6 +3,26 @@ from src.model.state_transition_functions import get_relative_positions
 from src.preprocessing.imu_preprocessing.rotation_matrix import *
 
 
+def get_acc_with_gravity(linear_acceleration: np.ndarray, alpha: float = 0.8) -> np.ndarray:
+
+    """
+    Measurement function to get back acceleration from linear acceleration and gravity. Refer:
+    https://developer.android.com/reference/android/hardware/SensorEvent#values
+
+    :param linear_acceleration: Linear acceleration values
+    :param alpha: Calculated as t / (t + dt) where t is low pass filter time constant
+    :return: Raw acceleration with gravity
+    """
+
+    acc = np.empty(3)
+
+    acc[0] = linear_acceleration[0] / 1.2
+    acc[1] = linear_acceleration[1] / 1.2
+    acc[2] = (linear_acceleration[2] - (alpha * 9.81)) / 1.2
+
+    return acc
+
+
 def hx(prior_sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
 
     """
@@ -14,11 +34,10 @@ def hx(prior_sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
     :return: Array of measurements
     """
 
-    acc = prior_sigmas[2:5]
+    linear_acc = prior_sigmas[2:5]
     gyr = prior_sigmas[5:]
 
-    filter_coefficients = fir_coefficients_hamming_window()
-    linear_acc = apply_filter(filter_coefficients, acc)
+    acc = get_acc_with_gravity(linear_acc)
     normalized_acc = normalized_acceleration(linear_acc)
 
     yaw_body = (gyr[2] * dt) * (180 / np.pi)

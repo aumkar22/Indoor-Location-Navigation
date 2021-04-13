@@ -1,0 +1,32 @@
+import random
+import numpy as np
+
+from dataclasses import dataclass
+
+
+@dataclass
+class Params:
+
+    """
+    Dataclass to store initial system states
+    """
+
+    mu_x: int = random.randint(130, 200)
+    mu_y: int = random.randint(150, 200)
+    mu_accx: float = random.uniform(-2.0, 1.0)
+    mu_accy: float = random.uniform(1.0, 5.0)
+    mu_accz: float = random.uniform(4.0, 12.0)
+    mu_gyrx: float = random.uniform(-1.0, 1.0)
+    mu_gyry: float = random.uniform(-1.0, 1.0)
+    mu_gyrz: float = random.uniform(-1.0, 1.0)
+    stds: np.ndarray = np.array([10.0, 10.0, 0.5, 3.0, 5.0, 0.05, 0.05, 0.05])
+
+    initial_mu_: np.ndarray = np.array(
+        [mu_x, mu_y, mu_accx, mu_accy, mu_accz, mu_gyrx, mu_gyry, mu_gyrz]
+    )
+    initial_covariance_: np.ndarray = np.random.normal(
+        initial_mu_, stds, (initial_mu_.size, initial_mu_.size)
+    )
+
+    # Initializing measurement covariance matrix
+    R_: np.ndarray = np.random.normal(0.0, 0.2, (8, 8))

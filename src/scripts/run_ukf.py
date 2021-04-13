@@ -1,7 +1,9 @@
 import json
 
+from scipy.ndimage import gaussian_filter
 from filterpy.common import Q_continuous_white_noise
 
+from src.util.parameters import Params
 from src.scripts.get_required_data import *
 from src.util.definitions import *
 from src.model.state_transition_functions import *
@@ -10,69 +12,129 @@ from src.model.measurement_functions import *
 
 from src.visualization.result_visualization import *
 
-acc, gyro, way = get_data(example_train[0])
 
-with example_json_plan[0].open() as j:
-    json_data = json.load(j)
+def get_data_for_ukf(
+    acc_data: np.ndarray, gyr_data: np.ndarray, waypoints: np.ndarray, json_floor_file: Path
+) -> Tuple[np.ndarray, ...]:
 
-width_meter = json_data["map_info"]["width"]
-height_meter = json_data["map_info"]["height"]
+    """
+    Function to get necessary measurement data for UKF
 
-timestamps = acc[:, 0] / 1000
-data_ = fix_measurements(acc, gyro, way)
-way_t = timestamp_conversions(way[:, 0] / 1000)
-t = data_[:, 0]
-data = data_[:, 1:]
-measurements = np.column_stack((data[:, :2], acc[:, 1:], gyro[:, 1:]))
+    :param acc_data: Sensor accelerometer data
+    :param gyr_data: Sensor gyroscope data
+    :param waypoints: Ground truth waypoints collected at checkpoints
+    :param json_floor_file: Floor size info file
+    :return: Floor size (width, height), timestamps, timesteps, sensor measurements
+    """
 
-R = np.random.normal(0.0, 1.0, (8, 8))
+    with json_floor_file.open() as j:
+        json_data = json.load(j)
 
-true_waypoint = pd.DataFrame({"t": way[:, 0] / 1000, "x": way[:, 1], "y": way[:, 2]})
-new_statex = []
-new_statey = []
+    width_meter_ = json_data["map_info"]["width"]
+    height_meter_ = json_data["map_info"]["height"]
 
-for i, measure in enumerate(data):
+    timestamps_ = acc_data[:, 0] / 1000
+    data = fix_measurements(acc_data, gyr_data, waypoints)
+    timestep = data[:, 0]
+    measurements_ = data[:, 1:]
 
-    if i == 0:  # Initial state belief
-        mu = initial_mu
-        cov = initial_covariance
-        wm, wc, lambda_ = compute_sigma_weights(0.6, 2.0, kappa=-3)
-    else:
-        mu = estimated_state
-        cov = new_state_covariance
-        wm, wc, lambda_ = compute_sigma_weights(0.3, 2.0)
+    return width_meter_, height_meter_, timestamps_, timestep, measurements_
 
-    sigmas = compute_sigmas(lambda_, mu, cov)
 
-    z = np.concatenate((measure[:2], acc[i, 1:], gyro[i, 1:]))
-    process_noise = Q_continuous_white_noise(4, t[i], block_size=2)
+def perform_ukf(
+    measurements: np.ndarray,
+    timestamps: np.ndarray,
+    dt: np.ndarray,
+    initial_mu: np.ndarray,
+    initial_covariance: np.ndarray,
+    R: np.ndarray,
+) -> Tuple[np.ndarray, np.ndarray]:
 
-    # PREDICT STEP
-    ukf_mean, ukf_cov, sigmas_f = perform_ut(
-        sigmas, t[i], timestamps[i], fx, wm, wc, process_noise
+    """
+    Function to run UKF
+
+    :param measurements: Sensor measurements
+    :param timestamps: Data timestamps
+    :param dt: Timesteps
+    :param initial_mu: Initial state of the system
+    :param initial_covariance: Initial covariance
+    :param R: Measurement covariance matrix
+    :return: Array of estimated states and covariance
+    """
+
+    new_state = []
+    new_covariance = []
+
+    for i, measure in enumerate(measurements):
+
+        if i == 0:  # Initial state belief
+            mu = initial_mu
+            cov = initial_covariance
+            wm, wc, lambda_ = compute_sigma_weights(0.6, 2.0, kappa=-3)
+        else:
+            mu = new_state[-1]
+            cov = new_covariance[-1]
+            wm, wc, lambda_ = compute_sigma_weights(0.3, 2.0)
+
+        sigmas = compute_sigmas(lambda_, mu, cov)
+
+        z = np.concatenate((measure[:2], measure[2:5], measure[5:]))
+        process_noise = Q_continuous_white_noise(4, dt[i], block_size=2)
+
+        # PREDICT STEP
+        ukf_mean, ukf_cov, sigmas_f = perform_ut(
+            sigmas, dt[i], timestamps[i], fx, wm, wc, process_noise
+        )
+        # UPDATE STEP
+        estimated_state, estimated_covariance = update(
+            ukf_mean, ukf_cov, sigmas_f, dt[i], timestamps[i], z, hx, wm, wc, R
+        )
+
+        print("Measurement: ", "(", z[0], z[1], ")")
+        print("predictions: ", "(", estimated_state[0], estimated_state[1], ")")
+
+        new_state.append(estimated_state)
+        new_covariance.append(estimated_covariance)
+
+    return np.array(new_state), np.array(new_covariance)
+
+
+if __name__ == "__main__":
+
+    parameters = Params()
+    initial_state = parameters.initial_mu_
+    initial_state_covariance = parameters.initial_covariance_
+    measurement_covariance = parameters.R_
+
+    acc, gyro, way = get_data(example_train[0])
+
+    (
+        width_meter_floor,
+        height_meter_floor,
+        sensor_timestamps,
+        sensor_timestep,
+        sensor_measurements,
+    ) = get_data_for_ukf(acc, gyro, way, example_json_plan[0])
+
+    estimated_mu, estimated_cov = perform_ukf(
+        sensor_measurements,
+        sensor_timestamps,
+        sensor_timestep,
+        initial_state,
+        initial_state_covariance,
+        measurement_covariance,
     )
-    # UPDATE STEP
-    estimated_state, new_state_covariance = update(
-        ukf_mean, ukf_cov, sigmas_f, t[i], timestamps[i], z, hx, wm, wc, R
+
+    smoothed_statesx = gaussian_filter(estimated_mu[:, 0], 10)
+    smoothed_statesy = gaussian_filter(estimated_mu[:, 1], 10)
+
+    estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
+
+    visualize_trajectory(
+        trajectory=way[:, 1:],
+        estimated_way=estimate[50::50, 1:],
+        floor_plan_filename=example_floor_plan[0],
+        width_meter=width_meter_floor,
+        height_meter=height_meter_floor,
+        show=True,
     )
-
-    print("Measurement: ", "(", z[0], z[1], ")")
-    print("predictions: ", "(", estimated_state[0], estimated_state[1], ")")
-
-    new_statex.append(estimated_state[0])
-    new_statey.append(estimated_state[1])
-
-new_state_predictions_df = pd.DataFrame({"t": acc[:, 0] / 1000, "x": new_statex, "y": new_statey})
-
-estimate = np.column_stack((acc[:, 0], np.array(new_statex), np.array(new_statey)))
-
-estimate_at_waypoint = fix_waypoint(way[:, 0], estimate, True)
-
-visualize_trajectory(
-    trajectory=way[:, 1:],
-    estimated_way=estimate_at_waypoint,
-    floor_plan_filename=example_floor_plan[0],
-    width_meter=width_meter,
-    height_meter=height_meter,
-    show=True,
-)

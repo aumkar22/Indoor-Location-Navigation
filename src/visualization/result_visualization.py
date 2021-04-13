@@ -79,12 +79,11 @@ def visualize_trajectory(
         go.Scattergl(
             x=trajectory[:, 0],
             y=trajectory[:, 1],
-            mode=mode,
-            marker=dict(size=size_list, color=color_list),
-            line=dict(shape="linear", color="rgb(100, 10, 100)", width=2, dash="dot"),
+            mode="markers + text",
+            marker=dict(size=size_list, color="darkmagenta"),
             text=text_list,
             textposition="top center",
-            name="trajectory",
+            name="original waypoint",
         )
     )
 
@@ -92,11 +91,8 @@ def visualize_trajectory(
         go.Scattergl(
             x=estimated_way[:, 0],
             y=estimated_way[:, 1],
-            mode=mode,
-            marker=dict(size=size_list_estimated, color=color_list_estimated),
-            line=dict(shape="linear", color="rgb(23, 57, 211)", width=2, dash="dot"),
-            text=text_list_estimated,
-            textposition="top center",
+            mode="lines + text",
+            line={"color": "mediumseagreen"},
             name="estimated_trajectory",
         )
     )
