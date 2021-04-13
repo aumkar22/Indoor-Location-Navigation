@@ -3,9 +3,6 @@ import numpy as np
 
 from dataclasses import dataclass
 
-x = np.random.normal(0.0, 1.0, 1)
-breakpoint()
-
 
 @dataclass
 class Params:
