@@ -7,20 +7,25 @@ Indoor-Location-Navigation
 │   README.md
 |
 └───src
-     └───scripts                                                // Scripts to read and fix data errors and run UKF
-               |  apply_data_fix.py
-               |  read_data.py
-               |  run_ukf.py
-               |  ...
-     └───preprocessing                                          // Scripts for processing data (used for state transition and measurement functions)
-               |  rotation_matrix.py
-               |  linear_acceleration_compute.py
-               |  ...
-     └───util                                                   // Utility scripts
-               |  definitions.py
-               |  parameters.py
-     └───visualization                                          // Result visualization script
-               |  result_visualization.py
+|    └───scripts                                                // Scripts to read and fix data errors and run UKF
+|    |  apply_data_fix.py
+|    |  read_data.py
+|    |  run_ukf.py
+|    |  ...
+|    └───preprocessing                                          // Scripts for processing data (used for state transition and measurement functions)
+|    |  rotation_matrix.py
+|    |  linear_acceleration_compute.py
+|    |  ...
+|    └───model                                                  // UKF model scripts
+|    |  unscented_kalman.py
+|    |  state_transition_functions.py
+|    |  measurement_functions.py
+|    |  ...
+|    └───util                                                   // Utility scripts
+|    |  definitions.py
+|    |  parameters.py
+|    └───visualization                                          // Result visualization script
+|    |  result_visualization.py
 │
 └───data                                                         //raw data from two sites
       └───site1
