@@ -43,7 +43,7 @@ pitch = (gyr_y * dt) * (180 / numpy.pi)
 roll = (gyr_x * dt) * (180 / numpy.pi)
 ```
 
-These angles are measured in body frame and need to be converted to angles in navigation frame. A rotation matrix performs this conversion and we obtain z-axis in vertical direction, x-axis pointing east and y-axis pointing north. Though the phone was held flat (z-axis being the vertical direction), noise gets introduced due to human gait. Hence this transformation is explicitly performed. Heading can then be obtained from rotation around z-axis using basic trignomtric functions (Refer: https://www.mdpi.com/1424-8220/15/3/7016). Relative position is then computed based on heading and added with previous position estimate to obtain new position state.
+These angles are measured in body frame and need to be converted to angles in navigation frame. A rotation matrix performs this conversion and we obtain z-axis in vertical direction, x-axis pointing east and y-axis pointing north. Though the phone was held flat (z-axis being the vertical direction), noise gets introduced due to human gait. Hence this transformation is explicitly performed. Heading can then be obtained from rotation around z-axis using basic trigonometric functions (Refer: https://www.mdpi.com/1424-8220/15/3/7016). Relative position is then computed based on heading and added with previous position estimate to obtain new position state.
 
 ### Update step
 
