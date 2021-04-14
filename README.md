@@ -14,20 +14,14 @@ The predict step generates sigma points and their corresponding weights. Then th
 The state transition function computes linear acceleration as follows (Refer: https://developer.android.com/reference/android/hardware/SensorEvent#values):
 
 ```
-gravity_x = 0.0
-gravity_y = 0.0
-gravity_z = 9.81
+gravity = [0.0, 0.0, 9.81]
 linear_acceleration = np.zeros(3)
 ```
 ```
-gravity_x = alpha * gravity_x + (1 - alpha) * acc[0]
-gravity_y = alpha * gravity_y + (1 - alpha) * acc[1]
-gravity_z = alpha * gravity_z + (1 - alpha) * acc[2]
+gravity = [alpha * gravity[i] + (1 - alpha) * acc for i, acc in enumerate(acceleration)]
 ```
 ```
-linear_acceleration[0] = acc[0] - gravity_x
-linear_acceleration[1] = acc[1] - gravity_y
-linear_acceleration[2] = acc[2] - gravity_z
+linear_acceleration = acceleration - gravity
 ```
 
 Normalized acceleration is then calculated as,
