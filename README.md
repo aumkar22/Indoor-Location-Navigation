@@ -24,7 +24,7 @@ Indoor-Location-Navigation
 |   run_ukf.py                                              // Script to run UKF
 |
 └───src
-|    └───scripts                                            // Scripts to read and fix data errors and run UKF
+|    └───scripts                                            // Scripts to read and fix data errors
 |    |  apply_data_fix.py
 |    |  read_data.py
 |    |  ...
