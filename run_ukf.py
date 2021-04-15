@@ -105,7 +105,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "-b",
         "--building",
-        help="One of the buildings where experiments were " "conducted",
+        help="One of the buildings where experiments were conducted",
         default="5a0546857ecc773753327266",
     )
     parser.add_argument("-f", "--floor", help="Any floor of the selected building", default="B1")
