@@ -3,7 +3,7 @@ Repository for kaggle competition "Indoor Location &amp; Navigation" https://www
 
 ## Running the code
 
-Install necessary dependencies as:
+Install dependencies as:
 
 ```
 pip install -r requirements.txt
