@@ -29,4 +29,4 @@ class Params:
     )
 
     # Initializing measurement covariance matrix
-    R_: np.ndarray = np.random.normal(0.0, 0.5, (8, 8))
+    R_: np.ndarray = np.random.normal(0.0, 1.0, (8, 8))

@@ -22,6 +22,6 @@ SENSORS = (
 
 sensor_train_files = list(TRAIN_PATH.glob(r"**/*.txt"))
 
-example_train = list(TRAIN_PATH.glob(r"5a0546857ecc773753327266/F4/5d11dc28ffe23f0008604f67.txt"))
-example_floor_plan = list(METADATA_PATH.glob(r"5a0546857ecc773753327266/F4/floor_image.png"))
-example_json_plan = list(METADATA_PATH.glob(r"5a0546857ecc773753327266/F4/floor_info.json"))
+example_train = list(TRAIN_PATH.glob(r"5a0546857ecc773753327266/B1/5e158ee91506f2000638fd17.txt"))
+example_floor_plan = list(METADATA_PATH.glob(r"5a0546857ecc773753327266/B1/floor_image.png"))
+example_json_plan = list(METADATA_PATH.glob(r"5a0546857ecc773753327266/B1/floor_info.json"))

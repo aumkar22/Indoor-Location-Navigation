@@ -1,7 +1,8 @@
 import json
+import argparse
+import sys
 
 from scipy.ndimage import gaussian_filter
-from filterpy.common import Q_continuous_white_noise
 
 from src.util.parameters import Params
 from src.scripts.get_required_data import *
@@ -79,8 +80,7 @@ def perform_ukf(
         sigmas = compute_sigmas(lambda_, mu, cov)
 
         z = np.concatenate((measure[:2], measure[2:5], measure[5:]))
-        process_noise = Q_continuous_white_noise(4, dt[i], block_size=2)
-
+        process_noise = np.random.normal(100.0, 30.0, (8, 8))
         # PREDICT STEP
         ukf_mean, ukf_cov, sigmas_f = perform_ut(
             sigmas, dt[i], timestamps[i], fx, wm, wc, process_noise
@@ -101,12 +101,30 @@ def perform_ukf(
 
 if __name__ == "__main__":
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-b",
+        "--building",
+        help="One of the buildings where experiments were " "conducted",
+        default="5a0546857ecc773753327266",
+    )
+    parser.add_argument("-f", "--floor", help="Any floor of the selected building", default="B1")
+    parser.add_argument("-t", "--trace", help="Trace file", default="5e158ee91506f2000638fd17.txt")
+    args = parser.parse_args()
+    building = args.building
+    floor = args.floor
+    trace = args.trace
+
+    if not (TRAIN_PATH / building / floor / trace).exists():
+        sys.exit("Path does not exist")
+
+    filepath = TRAIN_PATH / building / floor / trace
     parameters = Params()
     initial_state = parameters.initial_mu_
     initial_state_covariance = parameters.initial_covariance_
     measurement_covariance = parameters.R_
 
-    acc, gyro, way = get_data(example_train[0])
+    acc, gyro, way = get_data(filepath)
 
     (
         width_meter_floor,
@@ -132,7 +150,7 @@ if __name__ == "__main__":
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[50::50, 1:],
+        estimated_way=estimate[150::300, 1:],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
