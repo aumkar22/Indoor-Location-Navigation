@@ -11,8 +11,8 @@ from src.model.waypoint_measurement_fix import fix_waypoint
 def compute_sigmas(lambda_: float, x: np.ndarray, P: np.ndarray, n: int = 8) -> np.ndarray:
 
     """
-    To avoid errors due to covariance matrix being positive semidefinite or non-positive
-    definite, sigma calculation is based on SVD decomposition of state covariance. Refer:
+    To avoid errors due to covariance matrix being positive semidefinite, sigma calculation is
+    based on SVD decomposition of state covariance. Refer:
     https://www.researchgate.net/publication/251945722_A_UKF_Algorithm_Based_on_the_Singular_Value_Decomposition_of_State_Covariance
 
     :param lambda_: Lambda scaling parameter
