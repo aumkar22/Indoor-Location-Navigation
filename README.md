@@ -1,6 +1,76 @@
 # Indoor-Location-Navigation
 Repository for kaggle competition "Indoor Location &amp; Navigation" https://www.kaggle.com/c/indoor-location-navigation
 
+## Running the code
+
+Install necessary dependencies as:
+
+```
+pip install -r requirements.txt
+```
+
+You can run this code from command line as
+
+```
+python run_ukf.py --building=5c3c44b80379370013e0fd2b --floor=F1 --trace=5d8db27ab3042e000612f86f.txt
+```
+
+Arguments are optional, if not provided, default would be used.
+
+## Repository structure
+```
+Indoor-Location-Navigation
+│   README.md
+|   run_ukf.py                                              // Script to run UKF
+|
+└───src
+|    └───scripts                                            // Scripts to read and fix data errors and run UKF
+|    |  apply_data_fix.py
+|    |  read_data.py
+|    |  ...
+|    └───preprocessing                                      // Scripts for processing data (used for state transition and measurement functions)
+|    |  rotation_matrix.py
+|    |  linear_acceleration_compute.py
+|    |  ...
+|    └───model                                              // UKF model scripts
+|    |  unscented_kalman.py
+|    |  state_transition_functions.py
+|    |  measurement_functions.py
+|    |  ...
+|    └───util                                               // Utility scripts
+|    |  definitions.py
+|    |  parameters.py
+|    └───visualization                                      // Result visualization script
+|    |  result_visualization.py
+│
+└───data                                                    //raw data from sites
+      └───train
+      |      └───building1
+      |      |     └───B1                                   //traces from one floor
+      |      |     |    └───5dda14a2c5b77e0006b17533.txt    //trace file
+      |      |     |    |          |   ...
+      |      |     |
+      |      |     └───F1
+      |      |     │   ...
+      |      |
+      |      └───building2
+      |            │   ...
+      |
+      └───metadata
+             └───building1
+      |      |     └───B1                                               
+      |      |     |    └───floor_image.png                  //floor plan
+      |      |     |    └───floor_info.json                  //floor size info
+      |      |     |    └───geojson_map.json                 //floor plan in vector format (GeoJSON)
+      |      |     |
+      |      |     └───F1
+      |      |     │   ...
+      |      |
+      |      └───building2
+      |            │   ...
+```
+
+
 ## Method
 The goal of this competition is to predict indoor position using smartphone sensor data. For this task I decided to implement Unscented Kalman Filter. Waypoint positions (x, y co-ordinates on a map), acceleration and rate of rotation (gyroscope) were chosen as states. States were initialized based on prior knowledge of the system. Based on the information provided by the hosts of the competition, cellphone was held flat in front of chest (z-axis in vertical direction) with heading in the direction of y-axis. Based on this information, acceleration in z-axis was choosen between 5 m/s^2 and 12 m/s^2 caused during heel strike (acceleration goes above gravity) and mid stance phases of gait. Heading in the y-axis has some acceleration and hence was initialized between 1 m/s^2 and 5m/s^2 while acceleration in x-axis is minimum and was sampled from a normal dstribution with mean zero and unit standard deviation. Since no immediate turns were expected at the start of the experiment, gyroscope initial state values were also sampled from a normal distribution with zero mean and unit standard deviation.
 
@@ -58,48 +128,3 @@ The update step takes place in measurement space. Thus prior sigmas are converte
 ![](https://i.imgur.com/jhcpcUG.png)
 
 ![](https://i.imgur.com/KKbtZJv.png)
- 
-## Repository structure
-```
-Indoor-Location-Navigation
-│   README.md
-|
-└───src
-|    └───scripts                                                // Scripts to read and fix data errors and run UKF
-|    |  apply_data_fix.py
-|    |  read_data.py
-|    |  run_ukf.py
-|    |  ...
-|    └───preprocessing                                          // Scripts for processing data (used for state transition and measurement functions)
-|    |  rotation_matrix.py
-|    |  linear_acceleration_compute.py
-|    |  ...
-|    └───model                                                  // UKF model scripts
-|    |  unscented_kalman.py
-|    |  state_transition_functions.py
-|    |  measurement_functions.py
-|    |  ...
-|    └───util                                                   // Utility scripts
-|    |  definitions.py
-|    |  parameters.py
-|    └───visualization                                          // Result visualization script
-|    |  result_visualization.py
-│
-└───data                                                         //raw data from two sites
-      └───site1
-      |     └───B1                                               //traces from one floor
-      |     |    └───path_data_files                             
-      |     |    |          └───5dda14a2c5b77e0006b17533.txt     //trace file
-      |     |    |          |   ...
-      |     |    |
-      |     |    |   floor_image.png                             //raster floor plan
-      |     |    |   floor_info.json                             //floor size info
-      |     |    |   geojson_map.json                            //floor plan in vector format (GeoJSON)
-      |     |
-      |     └───F1
-      |     │   ...
-      |
-      └───site2
-            │   ...
-```
-
