@@ -79,18 +79,17 @@ def perform_ukf(
 
         sigmas = compute_sigmas(lambda_, mu, cov)
 
-        z = np.concatenate((measure[:2], measure[2:5], measure[5:]))
-        process_noise = np.random.normal(100.0, 30.0, (8, 8))
+        process_noise = np.random.normal(100.0, 50.0, (8, 8))
         # PREDICT STEP
         ukf_mean, ukf_cov, sigmas_f = perform_ut(
             sigmas, dt[i], timestamps[i], fx, wm, wc, process_noise
         )
         # UPDATE STEP
         estimated_state, estimated_covariance = update(
-            ukf_mean, ukf_cov, sigmas_f, dt[i], timestamps[i], z, hx, wm, wc, R
+            ukf_mean, ukf_cov, sigmas_f, dt[i], timestamps[i], measure, hx, wm, wc, R
         )
 
-        print("Measurement: ", "(", z[0], z[1], ")")
+        print("Measurement: ", "(", measure[0], measure[1], ")")
         print("predictions: ", "(", estimated_state[0], estimated_state[1], ")")
 
         new_state.append(estimated_state)
@@ -150,7 +149,7 @@ if __name__ == "__main__":
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[150::300, 1:],
+        estimated_way=estimate[100:-50:300, 1:],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
