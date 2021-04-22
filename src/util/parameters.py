@@ -15,7 +15,7 @@ class Params:
     mu_y: int = random.randint(150, 200)
     mu_accx: float = np.random.normal(0.0, 1.0, 1)[0]
     mu_accy: float = random.uniform(1.0, 5.0)
-    mu_accz: float = random.uniform(4.0, 12.0)
+    mu_accz: float = np.random.normal(0.0, 5.0, 1)[0]
     mu_gyrx: float = np.random.normal(0.0, 1.0, 1)[0]
     mu_gyry: float = np.random.normal(0.0, 1.0, 1)[0]
     mu_gyrz: float = np.random.normal(0.0, 1.0, 1)[0]
