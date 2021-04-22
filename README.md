@@ -98,7 +98,6 @@ Acceleration magnitude is then calculated as,
 
 ```
 acceleration_magnitude = np.sqrt(np.sum(linear_acceleration ** 2))
-
 ```
 
 Using kinematic equations of motion, distance traveled in a timestep is then calculated as 
