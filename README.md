@@ -80,17 +80,14 @@ A major problem with UKF is the algorithm running into errors when it can't ensu
 The predict step generates sigma points and their corresponding weights. Then the points are passed through a non-linear function, **F.x** (state transition function). The prior mean and covariance are computed by using unscented transform on transformed points.
 
 #### State transition function
-
 The state transition function computes linear acceleration as follows (Refer: https://developer.android.com/reference/android/hardware/SensorEvent#values):
 
 ```
 gravity = [0.0, 0.0, 9.81]
 linear_acceleration = np.zeros(3)
-```
-```
+
 gravity = [alpha * gravity[i] + (1 - alpha) * acc for i, acc in enumerate(acceleration)]
-```
-```
+
 linear_acceleration = acceleration - gravity
 ```
 
