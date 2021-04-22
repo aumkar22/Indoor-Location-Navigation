@@ -94,9 +94,12 @@ gravity = [alpha * gravity[i] + (1 - alpha) * acc for i, acc in enumerate(accele
 linear_acceleration = acceleration - gravity
 ```
 
-Normalized acceleration is then calculated as,
+Acceleration magnitude is then calculated as,
 
-![](https://i.imgur.com/BAtbiz7.png)
+```
+acceleration_magnitude = np.sqrt(np.sum(linear_acceleration ** 2))
+
+```
 
 Using kinematic equations of motion, distance traveled in a timestep is then calculated as 
 
