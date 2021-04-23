@@ -31,4 +31,4 @@ class Params:
     # Initializing measurement covariance matrix
     R_: np.ndarray = np.random.normal(0.0, 1.0, (8, 8))
 
-    process_noise = np.random.normal(100.0, 50.0, (8, 8))
+    process_noise = np.random.normal(10.0, 50.0, (8, 8))

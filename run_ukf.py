@@ -2,8 +2,6 @@ import json
 import argparse
 import sys
 
-from scipy.ndimage import gaussian_filter
-
 from src.util.parameters import Params
 from src.scripts.get_required_data import *
 from src.util.definitions import *
@@ -143,18 +141,19 @@ if __name__ == "__main__":
         measurement_covariance,
         process_noise,
     )
-    # breakpoint()
-    smoothed_states, smoothed_cov, kgain = rts_smoother(
-        estimated_mu, estimated_cov, process_noise, sensor_timestamps, sensor_timestep
+
+    Q = np.random.normal(10.0, 800.0, (8, 8))
+    smoothed_states, smoothed_cov = rts_smoother(
+        estimated_mu, estimated_cov, Q, sensor_timestamps, sensor_timestep
     )
     smoothed_statesx = smoothed_states[:, 0]
     smoothed_statesy = smoothed_states[:, 1]
-    breakpoint()
+
     estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[100:-50, 1:],
+        estimated_way=estimate[50:-50:100, 1:],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
