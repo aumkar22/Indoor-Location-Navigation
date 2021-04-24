@@ -107,10 +107,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("-f", "--floor", help="Any floor of the selected building", default="B1")
     parser.add_argument("-t", "--trace", help="Trace file", default="5e158ee91506f2000638fd17.txt")
+    parser.add_argument("-s", "--smooth", help="RTS smooth results", default="False")
     args = parser.parse_args()
     building = args.building
     floor = args.floor
     trace = args.trace
+    smooth = args.smooth
 
     if not (TRAIN_PATH / building / floor / trace).exists():
         sys.exit("Path does not exist")
@@ -142,20 +144,27 @@ if __name__ == "__main__":
         process_noise,
     )
 
-    Q = np.random.normal(10.0, 800.0, (8, 8))
-    smoothed_states, smoothed_cov = rts_smoother(
-        estimated_mu, estimated_cov, Q, sensor_timestamps, sensor_timestep
-    )
-    smoothed_statesx = smoothed_states[:, 0]
-    smoothed_statesy = smoothed_states[:, 1]
+    if smooth == "True" or smooth == "true":
+        Q = np.random.normal(0.0, 800.0, (8, 8))
+        smoothed_states, smoothed_cov = rts_smoother(
+            estimated_mu, estimated_cov, Q, sensor_timestamps, sensor_timestep
+        )
+        smoothed_statesx = smoothed_states[:, 0]
+        smoothed_statesy = smoothed_states[:, 1]
 
-    estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
+        estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
+        title = "RTS smoothed states"
+
+    else:
+        estimate = np.column_stack((sensor_timestamps, estimated_mu[:, 0], estimated_mu[:, 1]))
+        title = "Waypoint state estimates"
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[50:-50:100, 1:],
+        estimated_way=estimate[10:-100:50, 1:],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
         show=True,
+        title=title,
     )
