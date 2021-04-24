@@ -12,7 +12,7 @@ pip install -r requirements.txt
 You can run this code from command line as
 
 ```
-python run_ukf.py --building=5c3c44b80379370013e0fd2b --floor=F1 --trace=5d8db27ab3042e000612f86f.txt
+python run_ukf.py --building=5c3c44b80379370013e0fd2b --floor=F1 --trace=5d8db27ab3042e000612f86f.txt --smooth=True
 ```
 
 Arguments are optional, if not provided, default would be used.
@@ -114,12 +114,18 @@ These angles are measured in body frame and need to be converted to angles in na
 
 The update step takes place in measurement space. Thus prior sigmas are converted to measurement space from state space using measurement function, **H.x** . The mean and covariance of the the converted points are then computed using the unscented transform. Finally, measurement residual, kalman gain and new state estimates (between prediction and measurement based on kalman gain) are computed.
 
-### Estimated sample position state plots 
+## Estimated sample position state plots 
+
+### Estimates with RTS smoothing
+
+![](https://i.imgur.com/cEWjUyj.png)
+
+![](https://i.imgur.com/sAQ4TmZ.png)
+
+### Estimates without RTS smoothing
 
 ![](https://i.imgur.com/3aY4RC1.png)
 
 ![](https://i.imgur.com/7lnrca2.png)
 
 ![](https://i.imgur.com/jhcpcUG.png)
-
-![](https://i.imgur.com/KKbtZJv.png)

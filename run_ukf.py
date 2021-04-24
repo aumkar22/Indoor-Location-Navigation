@@ -2,14 +2,13 @@ import json
 import argparse
 import sys
 
-from scipy.ndimage import gaussian_filter
-
 from src.util.parameters import Params
 from src.scripts.get_required_data import *
 from src.util.definitions import *
 from src.model.state_transition_functions import *
 from src.model.unscented_kalman import *
 from src.model.measurement_functions import *
+from src.model.rts_smoother import rts_smoother
 
 from src.visualization.result_visualization import *
 
@@ -49,6 +48,7 @@ def perform_ukf(
     initial_mu: np.ndarray,
     initial_covariance: np.ndarray,
     R: np.ndarray,
+    Q: np.ndarray,
 ) -> Tuple[np.ndarray, np.ndarray]:
 
     """
@@ -60,6 +60,7 @@ def perform_ukf(
     :param initial_mu: Initial state of the system
     :param initial_covariance: Initial covariance
     :param R: Measurement covariance matrix
+    :param Q: Process noise matrix
     :return: Array of estimated states and covariance
     """
 
@@ -79,11 +80,8 @@ def perform_ukf(
 
         sigmas = compute_sigmas(lambda_, mu, cov)
 
-        process_noise = np.random.normal(100.0, 50.0, (8, 8))
         # PREDICT STEP
-        ukf_mean, ukf_cov, sigmas_f = perform_ut(
-            sigmas, dt[i], timestamps[i], fx, wm, wc, process_noise
-        )
+        ukf_mean, ukf_cov, sigmas_f = perform_ut(sigmas, dt[i], timestamps[i], fx, wm, wc, Q)
         # UPDATE STEP
         estimated_state, estimated_covariance = update(
             ukf_mean, ukf_cov, sigmas_f, dt[i], timestamps[i], measure, hx, wm, wc, R
@@ -109,10 +107,12 @@ if __name__ == "__main__":
     )
     parser.add_argument("-f", "--floor", help="Any floor of the selected building", default="B1")
     parser.add_argument("-t", "--trace", help="Trace file", default="5e158ee91506f2000638fd17.txt")
+    parser.add_argument("-s", "--smooth", help="RTS smooth results", default="False")
     args = parser.parse_args()
     building = args.building
     floor = args.floor
     trace = args.trace
+    smooth = args.smooth
 
     if not (TRAIN_PATH / building / floor / trace).exists():
         sys.exit("Path does not exist")
@@ -122,6 +122,7 @@ if __name__ == "__main__":
     initial_state = parameters.initial_mu_
     initial_state_covariance = parameters.initial_covariance_
     measurement_covariance = parameters.R_
+    process_noise = parameters.process_noise
 
     acc, gyro, way = get_data(filepath)
 
@@ -140,18 +141,30 @@ if __name__ == "__main__":
         initial_state,
         initial_state_covariance,
         measurement_covariance,
+        process_noise,
     )
 
-    smoothed_statesx = gaussian_filter(estimated_mu[:, 0], 10)
-    smoothed_statesy = gaussian_filter(estimated_mu[:, 1], 10)
+    if smooth == "True" or smooth == "true":
+        Q = np.random.normal(0.0, 800.0, (8, 8))
+        smoothed_states, smoothed_cov = rts_smoother(
+            estimated_mu, estimated_cov, Q, sensor_timestamps, sensor_timestep
+        )
+        smoothed_statesx = smoothed_states[:, 0]
+        smoothed_statesy = smoothed_states[:, 1]
 
-    estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
+        estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
+        title = "RTS smoothed states"
+
+    else:
+        estimate = np.column_stack((sensor_timestamps, estimated_mu[:, 0], estimated_mu[:, 1]))
+        title = "Waypoint state estimates"
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[100:-50:300, 1:],
+        estimated_way=estimate[10:-100:50, 1:],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
         show=True,
+        title=title,
     )
