@@ -11,7 +11,9 @@ def rts_smoother(
 ) -> Tuple[np.ndarray, ...]:
 
     """
-    Function to run Rauch-Tung-Striebal Kalman smoother.
+    Function to run Rauch-Tung-Striebal Kalman smoother. Base code taken from
+    https://github.com/rlabbe/filterpy/blob/master/filterpy/kalman/UKF.py#L633. Made modifications
+    to fit with my other functions.
 
     :param estimated_state_means: Output estimated state means of UKF
     :param estimated_cov: Output estimated state covariance of UKF
