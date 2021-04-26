@@ -4,7 +4,7 @@ from filterpy.kalman import unscented_transform
 from scipy.linalg import cholesky, svd
 from typing import Tuple, Callable
 
-from src.scripts.time_conversion import timestamp_conversions
+from src.preprocessing.time_conversion import timestamp_conversions
 from src.model.waypoint_measurement_fix import fix_waypoint
 
 

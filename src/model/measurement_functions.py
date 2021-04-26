@@ -38,7 +38,7 @@ def hx(prior_sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
     gyr = prior_sigmas[5:]
 
     acc = get_acc_with_gravity(linear_acc)
-    normalized_acc = normalized_acceleration(linear_acc)
+    magnitude_acc = magnitude_acceleration(linear_acc)
 
     yaw_body = (gyr[2] * dt) * (180 / np.pi)
     pitch_body = (gyr[1] * dt) * (180 / np.pi)
@@ -47,7 +47,7 @@ def hx(prior_sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
     R = get_rotation_matrix(yaw_body, pitch_body, roll_body)
     euler_angles_in_navigation = get_navigation_angles_from_rotation_matrix(R)
 
-    velocity = normalized_acc * dt
+    velocity = magnitude_acc * dt
     position = velocity * dt
 
     heading = -euler_angles_in_navigation[-1] * (2 * np.pi)

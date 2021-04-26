@@ -1,13 +1,13 @@
 import numpy as np
 
 
-def normalized_acceleration(acc: np.ndarray) -> np.ndarray:
+def magnitude_acceleration(acc: np.ndarray) -> np.ndarray:
 
     """
-    Function to compute normalized acceleration from tri-axial acccelerometer data.
+    Function to compute acceleration magnitude from tri-axial acccelerometer data.
 
     :param acc: Tri-axial accelerometer data
-    :return: Normalized acceleration
+    :return: Acceleration magnitude
     """
     return np.sqrt(np.sum(acc ** 2))
 
@@ -27,7 +27,6 @@ def get_linear_acceleration(acceleration: np.ndarray, alpha: float = 0.8) -> np.
     # vertical direction (z-axis).
 
     gravity = [0.0, 0.0, 9.81]
-    linear_acceleration = np.zeros(3)
 
     gravity = [alpha * gravity[i] + (1 - alpha) * acc for i, acc in enumerate(acceleration)]
 
