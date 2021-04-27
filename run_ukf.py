@@ -153,7 +153,7 @@ if __name__ == "__main__":
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[50::100, :],
+        estimated_way=estimate[50::200, :],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
