@@ -1,5 +1,3 @@
-import numpy as np
-
 from src.preprocessing.low_pass_accelerometer_cleaning import *
 from src.preprocessing.rotation_matrix import *
 from src.preprocessing.angles import *
@@ -23,7 +21,7 @@ def get_relative_positions(distance: np.ndarray, heading: np.ndarray) -> np.ndar
     return relative_positions
 
 
-def fx(sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
+def fx(sigmas: np.ndarray, dt: float) -> np.ndarray:
 
     """
     State transition function to pass sigma points through UT.
@@ -33,16 +31,16 @@ def fx(sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
     roll: x
     :param sigmas: Input generated sigma points
     :param dt: Time step
-    :param timestamp: Timestamp in seconds
     :return: Array of new states
     """
 
     linear_acc = sigmas[2:5]
-    yaw_body, pitch_body, roll_body = sigmas[5], sigmas[6], sigmas[7]
-
     magnitude_acc = magnitude_acceleration(linear_acc)
 
-    R = get_rotation_matrix(yaw_body, pitch_body, roll_body)
+    # Big turns not expected in the following sample
+    euler_angles = sigmas[5:] + np.random.normal(0.0, np.pi / 16)
+
+    R = get_rotation_matrix(euler_angles[0], euler_angles[1], euler_angles[2])
     azimuth, pitch, roll = get_navigation_angles_from_rotation_matrix(R)
 
     velocity = magnitude_acc * dt
@@ -50,9 +48,8 @@ def fx(sigmas: np.ndarray, dt: float, timestamp: float) -> np.ndarray:
 
     heading = -azimuth * (2 * np.pi)
 
-    newx, newy, orient = compute_trajectory_from_heading(heading, position, azimuth, sigmas[:2])
+    newx, newy = compute_trajectory_from_heading(heading, position, azimuth, sigmas[:2])
 
     waypoint_prior = np.array([newx, newy])
-    euler_angles = np.array([yaw_body, pitch_body, roll_body])
 
     return np.concatenate((waypoint_prior, linear_acc, euler_angles))

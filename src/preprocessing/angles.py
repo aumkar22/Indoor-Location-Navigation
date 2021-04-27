@@ -5,9 +5,10 @@ from typing import Tuple
 def normalize_angles(angle: float) -> float:
 
     """
+    Normalize angles to range [-pi, pi)
 
-    :param angle:
-    :return:
+    :param angle: Angle in radians
+    :return: Normalized angle
     """
 
     angle = angle % (2 * np.pi)
@@ -23,12 +24,13 @@ def compute_trajectory_from_heading(
 ) -> Tuple[float, ...]:
 
     """
+    Function to compute direction of motion from heading.
     
-    :param heading:
-    :param distance:
-    :param orientation:
-    :param previous_state:
-    :return:
+    :param heading: Heading angle
+    :param distance: Distance travelled in the timestep
+    :param orientation: Orientation angle
+    :param previous_state: Previous state array
+    :return: New position
     """
 
     previous_statex = previous_state[0]
@@ -42,6 +44,5 @@ def compute_trajectory_from_heading(
 
     new_positionx = xposition_at_turn_start + (turning_radius * np.sin(orientation + turn_angle))
     new_positiony = yposition_at_turn_start - (turning_radius * np.cos(orientation + turn_angle))
-    new_orientation = orientation + turn_angle
 
-    return new_positionx, new_positiony, new_orientation
+    return new_positionx, new_positiony

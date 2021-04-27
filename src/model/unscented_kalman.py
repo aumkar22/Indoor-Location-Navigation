@@ -6,6 +6,7 @@ from typing import Tuple, Callable
 
 from src.preprocessing.time_conversion import timestamp_conversions
 from src.model.waypoint_measurement_fix import fix_waypoint
+from src.model.means_and_residuals import state_mean, state_residual
 
 
 def compute_sigmas(lambda_: float, x: np.ndarray, P: np.ndarray, n: int = 8) -> np.ndarray:
@@ -63,11 +64,11 @@ def compute_sigma_weights(
 def perform_ut(
     sigmas: np.ndarray,
     dt: float,
-    timestamp: float,
     func: Callable,
     wm: np.ndarray,
     wc: np.ndarray,
     noise: np.ndarray,
+    predict: bool,
     n: int = 8,
 ) -> Tuple[np.ndarray, ...]:
 
@@ -77,11 +78,12 @@ def perform_ut(
     :param n: Dimension of states / measurements
     :param sigmas: Sigma points
     :param dt: Time step
-    :param timestamp: Original timestamp
     :param func: Fx (predict) / Hx (update) function to pass sigma points through
     :param wm: Weights of means
     :param wc: Weights of covariance
     :param noise: Noise matrix
+    :param predict: True if predict step and use state residual and mean function; False for
+    update step
     :return: Unscented mean and covariance
     """
 
@@ -89,10 +91,17 @@ def perform_ut(
     points_after_transformation = np.zeros((sigma_count, n))
 
     for i in range(sigma_count):
-        points_after_transformation[i] = func(sigmas[i, :], dt, timestamp)
+        points_after_transformation[i] = func(sigmas[i, :], dt)
+
+    if predict:
+        residual_x = state_residual
+        x_mean = state_mean
+    else:
+        residual_x = np.subtract
+        x_mean = None
 
     transformed_mean, transformed_covariance = unscented_transform(
-        points_after_transformation, wm, wc, noise
+        points_after_transformation, wm, wc, noise, x_mean, residual_x
     )
 
     return transformed_mean, transformed_covariance, points_after_transformation
@@ -103,7 +112,6 @@ def update(
     pcov: np.ndarray,
     prior_sigma: np.ndarray,
     dt: float,
-    timestamp: float,
     measurements: np.ndarray,
     measurement_function: Callable,
     wm: np.ndarray,
@@ -120,7 +128,6 @@ def update(
     :param pcov: Prior predicted covariance
     :param prior_sigma: Prior
     :param dt: Time step
-    :param timestamp: Original timestamp
     :param measurements: Measurements data
     :param measurement_function: Function to convert prior sigmas to measurement space
     :param wm: Weights of means
@@ -130,15 +137,17 @@ def update(
     """
 
     mean, covariance, sigmas_after_ut = perform_ut(
-        prior_sigma, dt, timestamp, measurement_function, wm, wc, R
+        prior_sigma, dt, measurement_function, wm, wc, R, False
     )
 
     pxz = np.zeros((len(mean), len(mean)))
 
     for i, sigmas_h in enumerate(sigmas_after_ut):
-        pxz += wc[i] * np.outer(prior_sigma[i] - xp, sigmas_h - mean)
+        dx = state_residual(prior_sigma[i], xp)
+        dz = sigmas_h - mean
+        pxz += wc[i] * np.outer(dx, dz)
 
-    k = np.dot(pxz, np.linalg.inv(covariance))
+    k = np.dot(pxz, np.linalg.pinv(covariance))
     x = xp + np.dot(k, measurements - mean)
     p = pcov - np.dot(k, covariance).dot(k.T)
 
