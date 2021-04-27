@@ -9,7 +9,6 @@ from src.model.state_transition_functions import *
 from src.model.unscented_kalman import *
 from src.model.measurement_functions import *
 from src.model.rts_smoother import rts_smoother
-
 from src.visualization.result_visualization import *
 
 
@@ -33,17 +32,15 @@ def get_data_for_ukf(
     width_meter_ = json_data["map_info"]["width"]
     height_meter_ = json_data["map_info"]["height"]
 
-    timestamps_ = acc_data[:, 0] / 1000
     data = fix_measurements(acc_data, gyr_data, waypoints)
     timestep = data[:, 0]
     measurements_ = data[:, 1:]
 
-    return width_meter_, height_meter_, timestamps_, timestep, measurements_
+    return width_meter_, height_meter_, timestep, measurements_
 
 
 def perform_ukf(
     measurements: np.ndarray,
-    timestamps: np.ndarray,
     dt: np.ndarray,
     initial_mu: np.ndarray,
     initial_covariance: np.ndarray,
@@ -55,7 +52,6 @@ def perform_ukf(
     Function to run UKF
 
     :param measurements: Sensor measurements
-    :param timestamps: Data timestamps
     :param dt: Timesteps
     :param initial_mu: Initial state of the system
     :param initial_covariance: Initial covariance
@@ -72,19 +68,18 @@ def perform_ukf(
         if i == 0:  # Initial state belief
             mu = initial_mu
             cov = initial_covariance
-            wm, wc, lambda_ = compute_sigma_weights(0.6, 2.0, kappa=-3)
         else:
             mu = new_state[-1]
             cov = new_covariance[-1]
-            wm, wc, lambda_ = compute_sigma_weights(0.3, 2.0)
 
+        wm, wc, lambda_ = compute_sigma_weights(0.3, 2.0)
         sigmas = compute_sigmas(lambda_, mu, cov)
 
         # PREDICT STEP
-        ukf_mean, ukf_cov, sigmas_f = perform_ut(sigmas, dt[i], timestamps[i], fx, wm, wc, Q)
+        ukf_mean, ukf_cov, sigmas_f = perform_ut(sigmas, dt[i], fx, wm, wc, Q, True)
         # UPDATE STEP
         estimated_state, estimated_covariance = update(
-            ukf_mean, ukf_cov, sigmas_f, dt[i], timestamps[i], measure, hx, wm, wc, R
+            ukf_mean, ukf_cov, sigmas_f, dt[i], measure, hx, wm, wc, R
         )
 
         print("Measurement: ", "(", measure[0], measure[1], ")")
@@ -129,14 +124,12 @@ if __name__ == "__main__":
     (
         width_meter_floor,
         height_meter_floor,
-        sensor_timestamps,
         sensor_timestep,
         sensor_measurements,
     ) = get_data_for_ukf(acc, gyro, way, example_json_plan[0])
 
     estimated_mu, estimated_cov = perform_ukf(
         sensor_measurements,
-        sensor_timestamps,
         sensor_timestep,
         initial_state,
         initial_state_covariance,
@@ -145,23 +138,22 @@ if __name__ == "__main__":
     )
 
     if smooth == "True" or smooth == "true":
-        Q = np.random.normal(0.0, 800.0, (8, 8))
         smoothed_states, smoothed_cov = rts_smoother(
-            estimated_mu, estimated_cov, Q, sensor_timestamps, sensor_timestep
+            estimated_mu, estimated_cov, process_noise, sensor_timestep
         )
         smoothed_statesx = smoothed_states[:, 0]
         smoothed_statesy = smoothed_states[:, 1]
 
-        estimate = np.column_stack((sensor_timestamps, smoothed_statesx, smoothed_statesy))
+        estimate = np.column_stack((smoothed_statesx, smoothed_statesy))
         title = "RTS smoothed states"
 
     else:
-        estimate = np.column_stack((sensor_timestamps, estimated_mu[:, 0], estimated_mu[:, 1]))
+        estimate = np.column_stack((estimated_mu[:, 0], estimated_mu[:, 1]))
         title = "Waypoint state estimates"
 
     visualize_trajectory(
         trajectory=way[:, 1:],
-        estimated_way=estimate[10:-100:50, 1:],
+        estimated_way=estimate[50::200, :],
         floor_plan_filename=example_floor_plan[0],
         width_meter=width_meter_floor,
         height_meter=height_meter_floor,
