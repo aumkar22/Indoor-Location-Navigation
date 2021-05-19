@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import impyute as impy
 
 
 def fix_waypoint(t: np.ndarray, way: np.ndarray, estimate: bool = False) -> np.ndarray:
@@ -25,10 +24,14 @@ def fix_waypoint(t: np.ndarray, way: np.ndarray, estimate: bool = False) -> np.n
     wx[indices] = way[:, 1]
     wy[indices] = way[:, 2]
 
+    if indices[0] != 0:
+        wx[: indices[0]] = way[0, 1]
+        wy[: indices[0]] = way[0, 2]
+
     if estimate:
         return np.column_stack((wx, wy))
     else:
 
-        way_df = pd.DataFrame({"x": wx, "y": wy})
-        way_imputed = impy.em(way_df.values, loops=200)
-        return way_imputed
+        way_df = pd.DataFrame({"x": wx, "y": wy}).interpolate(method="linear")
+
+        return way_df.values
